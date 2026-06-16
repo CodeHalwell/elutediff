@@ -105,25 +105,27 @@ def _cluster_groups(smiles: list[str], cutoff: float) -> list[list[int]]:
 
 
 def _grouped_split(groups: list[list[int]], n: int, cfg: SplitConfig) -> Split:
-    """Greedily assign whole groups to test, then val, then train by target size.
+    """Assign whole groups to folds, filling train first (DeepChem-style).
 
-    Groups are shuffled (seeded) and sorted largest-first so big scaffolds don't
-    overshoot a small fold; each group fills test until its quota, then val, then
-    everything else lands in train.
+    Groups are shuffled (seeded) then sorted largest-first, so the biggest
+    scaffolds/clusters land in train and the smaller leftover groups populate val
+    and test. This keeps val/test non-empty whenever there are enough distinct
+    groups (with only a handful of large groups a fold can still come up empty --
+    use a random split for tiny/low-diversity sets).
     """
     rng = random.Random(cfg.seed)
     rng.shuffle(groups)
     groups.sort(key=len, reverse=True)
 
-    n_test_target = int(round(n * cfg.test_frac))
-    n_val_target = int(round(n * cfg.val_frac))
+    train_cutoff = n * (1.0 - cfg.val_frac - cfg.test_frac)
+    val_cutoff = n * (1.0 - cfg.test_frac)
 
     train, val, test = [], [], []
     for group in groups:
-        if len(test) + len(group) <= n_test_target:
-            test.extend(group)
-        elif len(val) + len(group) <= n_val_target:
+        if len(train) + len(group) <= train_cutoff:
+            train.extend(group)
+        elif len(train) + len(val) + len(group) <= val_cutoff:
             val.extend(group)
         else:
-            train.extend(group)
+            test.extend(group)
     return Split(sorted(train), sorted(val), sorted(test))

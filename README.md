@@ -29,6 +29,13 @@ pytest
 elutediff -c configs/b6_clean_vector.yaml audit   # canvas budget check (CPU)
 ```
 
+## Notebooks (Google Colab)
+
+Runnable Colab notebooks live in [`notebooks/`](notebooks/): data + RT-density
+targets and the RT baselines run on a free CPU runtime; the DiffusionGemma
+fine-tune needs an A100/H100. Each one installs `elutediff` from GitHub and runs
+on synthetic demo data out of the box.
+
 ## Documentation
 
 - [`docs/project-structure.md`](docs/project-structure.md) — package layout, the
