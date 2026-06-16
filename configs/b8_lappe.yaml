@@ -1,0 +1,14 @@
+# B8: clean vector + serialized Laplacian eigenvector (LapPE) conditioning.
+# Do graph-spectral features add chemical generalization on scaffold/cluster splits?
+experiment: b8_lappe
+metlin_path: data/raw/metlin_smrt
+target:
+  bin_width: 10.0
+  sigma: 20.0
+conditioning:
+  level: 4
+  lappe_k: 8
+  lappe_round: 2
+  lappe_sign_flip: true
+train:
+  output_dir: runs/b8_lappe

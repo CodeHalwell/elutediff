@@ -1,0 +1,13 @@
+# B6 (primary clean target): full Gaussian RT-density vector, SMILES-only prompt.
+# Does whole-canvas density generation improve beyond the center-bin control?
+experiment: b6_clean_vector
+metlin_path: data/raw/metlin_smrt
+target:
+  bin_width: 10.0
+  sigma: 20.0
+noise:
+  enabled: false
+conditioning:
+  level: 1
+train:
+  output_dir: runs/b6_clean_vector

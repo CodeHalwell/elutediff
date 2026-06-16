@@ -1,0 +1,47 @@
+# Base config. Experiment YAMLs override only the fields they change.
+# Keys mirror the dataclasses in src/elutediff/config.py.
+experiment: base
+metlin_path: data/raw/metlin_smrt
+
+target:
+  rt_min: 0.0
+  rt_max: 1200.0      # ~99-99.5th RT percentile; report clipped fraction
+  bin_width: 10.0     # audit 5 s once 10 s is locked
+  sigma: 20.0         # >= 2-3 bins so the density is resolved
+  scale: 100          # integer levels 000..100
+  token_width: 3
+
+noise:
+  enabled: false
+
+conditioning:
+  level: 1            # 1 SMILES, 2 +descriptors, 3 +atom/bond, 4 +LapPE, 5 +graph emb
+
+model:
+  model_name: unsloth/diffusiongemma-26B-A4B-it
+  load_in_4bit: false
+  canvas_length: 256
+  lora_r: 64
+  lora_alpha: 128
+  use_gradient_checkpointing: false
+
+train:
+  steps: 500          # reference full run: 4000
+  grad_accum: 4
+  lr: 1.0e-4
+  t_lo: 0.1
+  output_dir: runs/base
+
+eval:
+  denoising_steps: [1, 16, 64]
+  rt_tolerances_s: [15.0, 30.0, 60.0]
+  coverage_levels: [0.5, 0.8, 0.9]
+  n_eval: 200
+  n_samples: 8
+
+split:
+  strategy: scaffold  # headline metric is scaffold-split MAE
+  val_frac: 0.1
+  test_frac: 0.1
+  cluster_cutoff: 0.6
+  seed: 0
