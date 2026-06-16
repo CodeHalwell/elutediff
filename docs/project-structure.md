@@ -39,7 +39,7 @@ elutediff/
 │   ├── models/
 │   │   ├── diffusion.py      #   Unsloth FastModel + LoRA loaders       [wired]
 │   │   ├── baselines.py      #   B1/B2 ECFP/MLP + conformal/ensemble     [implemented]
-│   │   └── gnn.py            #   B3 GINE/graph-transformer (graph extra) [wired]
+│   │   └── gnn.py            #   B3 GINE/graph-transformer (graph extra) [implemented]
 │   ├── training/
 │   │   ├── block_diffusion.py#   corrupt-canvas objective + train loop  [wired]
 │   │   └── sampling.py        #   multi-step denoising generation        [wired]
@@ -68,7 +68,7 @@ needs numpy/scipy/pandas/pyyaml. RDKit (`chem`), classical/GNN baselines
 
 | Step | Proposal item | Where |
 |------|---------------|-------|
-| 1 | METLIN loader, canonicalization, descriptors, ECFP, splits | `data/` (done; LapPE pending) |
+| 1 | METLIN download + loader, canonicalization, descriptors, ECFP, splits | `scripts/download_metlin.py`, `data/` |
 | 2 | Clean + noisy RT-density target generators | `targets/`, `scripts/build_targets.py` |
 | 3 | Tokenizer-length audit; lock target format | `audit.py`, `scripts/tokenizer_audit.py` |
 | 4 | Scalar + graph baselines | `models/baselines.py` (B1/B2), `models/gnn.py` + `scripts/train_gnn.py` (B3), `scripts/train_baselines.py` |
