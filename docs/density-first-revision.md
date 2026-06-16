@@ -36,7 +36,7 @@ For molecule _i_ with RT \(r_i\), over time grid \(t_1,\ldots,t_T\):
  g_i(t_j)=\exp\left(-\frac{1}{2}\left(\frac{t_j-r_i}{\sigma}\right)^2\right)
 \]
 
-Use fixed-width integer quantization (e.g., `000..100`) after max-normalization.
+Use fixed-width integer quantization after max-normalization (101 levels: `000` through `100`, where leading zeros enforce fixed token width).
 
 ### Recommended initial target settings
 
