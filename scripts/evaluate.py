@@ -30,7 +30,11 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg: Config = load_config(args.config)
-    rows = [json.loads(line) for line in open(args.data)][: cfg.eval.n_eval]
+    # Evaluate only held-out rows: keep the test split (or all rows if the file
+    # carries no split field, i.e. it is already a held-out-only set).
+    all_rows = [json.loads(line) for line in open(args.data, encoding="utf-8")]
+    rows = [r for r in all_rows if r.get("split", "test") == "test"][: cfg.eval.n_eval]
+    print(f"evaluating on {len(rows)} held-out rows (of {len(all_rows)} total)")
     grid = time_grid(cfg.target)
 
     # Lazy heavy imports so --help works without torch/unsloth installed.

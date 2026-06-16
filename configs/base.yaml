@@ -10,7 +10,6 @@ target:
   sigma: 20.0         # >= 2-3 bins so the density is resolved
   scale: 100          # integer levels 000..100
   token_width: 3
-  include_endpoint: false
 
 noise:
   enabled: false

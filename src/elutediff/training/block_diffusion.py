@@ -66,6 +66,11 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
         torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     )
 
+    # Seed both RNGs used by the loop (Python `random` for noise level + shuffle,
+    # torch for the corruption mask/token sampling) for reproducible runs.
+    random.seed(train_cfg.seed)
+    torch.manual_seed(train_cfg.seed)
+
     model.config.use_cache = True
     model.train()
     opt = torch.optim.AdamW(
@@ -123,4 +128,6 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
 def _eos_id(processor) -> int:
     tok = processor.tokenizer if hasattr(processor, "tokenizer") else processor
     eos = getattr(tok, "eos_token_id", None) or 1
-    return eos[0] if isinstance(eos, (list, tuple)) else eos
+    if isinstance(eos, (list, tuple, set)):
+        return next(iter(eos)) if eos else 1
+    return eos

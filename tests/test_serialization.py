@@ -55,6 +55,41 @@ def test_validity_single_peak():
     assert rep["n_local_maxima"] == 1
 
 
+def test_flat_vector_is_not_a_peak():
+    cfg, _ = _levels()
+    flat = np.zeros(cfg.n_bins, dtype=int)
+    rep = validity_report(flat, cfg)
+    assert rep["n_local_maxima"] == 0
+    assert not rep["single_dominant_peak"]
+    # A constant non-zero vector is equally degenerate.
+    const = np.full(cfg.n_bins, 50, dtype=int)
+    assert validity_report(const, cfg)["n_local_maxima"] == 0
+
+
+def test_monotonic_ramp_has_no_interior_peak():
+    cfg, _ = _levels()
+    ramp = np.linspace(0, cfg.scale, cfg.n_bins).astype(int)
+    assert validity_report(ramp, cfg)["n_local_maxima"] == 0
+
+
+def test_two_peaks_counted():
+    cfg, _ = _levels()
+    v = np.zeros(cfg.n_bins, dtype=int)
+    v[30] = 100  # two well-separated spikes
+    v[80] = 100
+    assert validity_report(v, cfg)["n_local_maxima"] == 2
+
+
+def test_prompt_header_reflects_config():
+    from elutediff.serialization.prompts import _header
+
+    cfg = TargetConfig(bin_width=10.0, sigma=20.0, scale=255, token_width=3)
+    h = _header(cfg)
+    assert "3-digit" in h
+    assert "000-255" in h
+    assert str(cfg.n_bins) in h
+
+
 def test_decoded_rt_argmax_near_truth():
     cfg, levels = _levels(rt=730.0)
     rt_hat = decoded_rt(levels, cfg, mode="argmax")

@@ -25,7 +25,11 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg: Config = load_config(args.config)
-    rows = [json.loads(line) for line in open(args.data)]
+    all_rows = [json.loads(line) for line in open(args.data, encoding="utf-8")]
+    # Train only on the train split -- never on val/test, which would leak
+    # held-out labels and invalidate the reported experiments.
+    rows = [r for r in all_rows if r.get("split", "train") == "train"]
+    print(f"training on {len(rows)} train rows (of {len(all_rows)} total)")
 
     model, processor = load_model(cfg.model, hf_token=args.hf_token)
     print("model dims:", model_dimensions(model))

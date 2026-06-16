@@ -30,13 +30,12 @@ class TargetConfig:
     sigma: float = 20.0          # Gaussian width in seconds (>= 2-3 bins)
     scale: int = 100             # quantization levels: integers 000..scale
     token_width: int = 3         # fixed-width zero-padded tokens ("000".."100")
-    include_endpoint: bool = False  # exclude endpoint to save a canvas slot
 
     @property
     def n_bins(self) -> int:
+        """Number of equal-width bins covering [rt_min, rt_max)."""
         span = self.rt_max - self.rt_min
-        n = int(round(span / self.bin_width))
-        return n + 1 if self.include_endpoint else n
+        return int(round(span / self.bin_width))
 
 
 @dataclass
@@ -154,7 +153,7 @@ def _from_dict(cls: type, data: dict[str, Any]) -> Any:
 
 def load_config(path: str | Path) -> Config:
     """Load a :class:`Config` from a YAML file, falling back to defaults."""
-    with open(path) as fh:
+    with open(path, encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}
     return _from_dict(Config, data)
 

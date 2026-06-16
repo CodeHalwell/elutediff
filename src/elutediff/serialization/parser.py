@@ -108,21 +108,24 @@ def decoded_rt(levels: np.ndarray, cfg: TargetConfig, mode: str = "argmax") -> f
 
 
 def _count_local_maxima(arr: np.ndarray) -> int:
-    """Count strict interior local maxima, treating flat tops as one peak."""
+    """Count strict *interior* local maxima, treating a flat top as one peak.
+
+    A maximal plateau ``[i, j]`` is a peak only when it has real neighbours on
+    both sides that are strictly lower. Requiring interior neighbours excludes
+    degenerate outputs -- an all-constant (e.g. all-zero) vector, a monotonic
+    ramp, or any boundary plateau -- which must not satisfy the
+    single-dominant-peak validity criterion.
+    """
     n = arr.size
-    if n == 0:
+    if n < 3:
         return 0
-    if n == 1:
-        return 1
     count = 0
     i = 0
     while i < n:
         j = i
         while j + 1 < n and arr[j + 1] == arr[i]:
-            j += 1  # walk across a plateau
-        left = arr[i - 1] if i > 0 else -1
-        right = arr[j + 1] if j + 1 < n else -1
-        if arr[i] > left and arr[i] > right:
+            j += 1  # walk across a plateau [i, j]
+        if i > 0 and j < n - 1 and arr[i - 1] < arr[i] and arr[j + 1] < arr[j]:
             count += 1
         i = j + 1
     return count

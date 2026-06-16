@@ -148,7 +148,7 @@ def _iter_sdf(path: Path, keep_mol_block: bool, stats: LoadStats):
 
 
 def _iter_csv(path: Path, stats: LoadStats):
-    with open(path, newline="") as fh:
+    with open(path, newline="", encoding="utf-8") as fh:
         sample = fh.readline()
         fh.seek(0)
         reader = csv.DictReader(fh, delimiter=_sniff_delimiter(sample))

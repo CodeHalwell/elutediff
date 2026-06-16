@@ -13,8 +13,20 @@ from elutediff.targets.quantize import vector_to_tokens
 
 PROMPT_HEADER = (
     "Generate the retention-time density vector for this molecule. "
-    "Reply with {n_bins} space-separated 3-digit intensity tokens (000-100)."
+    "Reply with {n_bins} space-separated {width}-digit intensity tokens "
+    "({lo}-{hi})."
 )
+
+
+def _header(target_cfg: TargetConfig) -> str:
+    """Render the instruction header from the target config (token width/scale)."""
+    width = target_cfg.token_width
+    return PROMPT_HEADER.format(
+        n_bins=target_cfg.n_bins,
+        width=width,
+        lo="0".zfill(width),
+        hi=str(target_cfg.scale).zfill(width),
+    )
 
 
 def format_rt_vector(levels, cfg: TargetConfig) -> str:
@@ -46,7 +58,7 @@ def build_prompt(
     from the levels below it. Optional inputs are only appended when the level
     requests them *and* the data is supplied.
     """
-    lines = [PROMPT_HEADER.format(n_bins=target_cfg.n_bins), f"smiles={smiles}"]
+    lines = [_header(target_cfg), f"smiles={smiles}"]
 
     if cond_cfg.level >= 2 and descriptors:
         desc = " ".join(f"{k}={descriptors[k]:g}" for k in cond_cfg.descriptors if k in descriptors)

@@ -50,7 +50,7 @@ def main() -> int:
 
     cond = cfg.conditioning
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "w") as fh:
+    with open(args.out, "w", encoding="utf-8") as fh:
         for i, mol in enumerate(molecules):
             density = apply_noise(gaussian_density(mol.rt_seconds, cfg.target), cfg.noise)
             levels = quantize(density, cfg.target)

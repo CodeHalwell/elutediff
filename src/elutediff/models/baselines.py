@@ -132,7 +132,9 @@ class DeepEnsemble:
         from scipy.stats import norm
 
         preds = np.stack([m.predict(X) for m in self.models])
-        mean, std = preds.mean(0), preds.std(0)
+        # Unbiased std for the small ensemble; fall back to ddof=0 if k == 1.
+        ddof = 1 if preds.shape[0] > 1 else 0
+        mean, std = preds.mean(0), preds.std(0, ddof=ddof)
         z = norm.ppf(0.5 + level / 2.0)
         return mean - z * std, mean + z * std
 

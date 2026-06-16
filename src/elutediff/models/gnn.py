@@ -99,9 +99,10 @@ def predict_rt(model, smiles: list[str], batch_size: int = 256) -> np.ndarray:
     from torch_geometric.loader import DataLoader
 
     graphs = [mol_to_graph(s) for s in smiles]
+    device = next(model.parameters()).device
     model.eval()
     out = []
     with torch.no_grad():
         for batch in DataLoader(graphs, batch_size=batch_size):
-            out.append(model(batch).cpu().numpy())
+            out.append(model(batch.to(device)).cpu().numpy())
     return np.concatenate(out)

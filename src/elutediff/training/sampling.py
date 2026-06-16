@@ -36,7 +36,9 @@ def generate(model, processor, prompt: str, steps: int, canvas_len: int, seed: i
     model.eval()
     with torch.no_grad():
         out = model.generate(input_ids=ids, generation_config=gc)
-    seq = out.sequences[0, ids.shape[1]:]
+    # Some transformers/unsloth versions return a bare tensor instead of an
+    # object with `.sequences`; handle both.
+    seq = out.sequences[0, ids.shape[1]:] if hasattr(out, "sequences") else out[0, ids.shape[1]:]
     return tok.decode(seq.tolist(), skip_special_tokens=True)
 
 

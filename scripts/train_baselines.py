@@ -38,7 +38,7 @@ def main() -> int:
     ap.add_argument("--tolerances", type=float, nargs="+", default=[15.0, 30.0, 60.0])
     args = ap.parse_args()
 
-    rows = [json.loads(line) for line in open(args.data)]
+    rows = [json.loads(line) for line in open(args.data, encoding="utf-8")]
     descriptors = ConditioningConfig().descriptors
 
     def feats(smiles):

@@ -34,7 +34,7 @@ def main() -> int:
 
     from elutediff.models.gnn import build_gnn, mol_to_graph, predict_rt
 
-    rows = [json.loads(line) for line in open(args.data)]
+    rows = [json.loads(line) for line in open(args.data, encoding="utf-8")]
 
     def fold(name):
         return [r for r in rows if r.get("split") == name]

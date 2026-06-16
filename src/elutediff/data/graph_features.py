@@ -53,8 +53,10 @@ def laplacian_eigenvectors(smiles: str, k: int) -> np.ndarray:
     adj = _adjacency(smiles)
     n = adj.shape[0]
     deg = adj.sum(axis=1)
-    with np.errstate(divide="ignore"):
-        dinv_sqrt = np.where(deg > 0, 1.0 / np.sqrt(deg), 0.0)
+    # Mask so we never divide by zero for isolated atoms (deg == 0).
+    dinv_sqrt = np.zeros_like(deg)
+    mask = deg > 0
+    dinv_sqrt[mask] = 1.0 / np.sqrt(deg[mask])
     lap = np.eye(n) - (dinv_sqrt[:, None] * adj * dinv_sqrt[None, :])
 
     # Symmetric -> real eigenvalues; eigh returns them ascending.

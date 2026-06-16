@@ -15,8 +15,10 @@ from elutediff.config import NoiseConfig
 def apply_noise(density: np.ndarray, cfg: NoiseConfig) -> np.ndarray:
     """Add optional floor / linear drift / sparse spikes, then re-normalize.
 
-    Returns a new array in [0, 1]; the input is not modified. If ``cfg.enabled``
-    is False the input is returned unchanged (re-normalized for safety).
+    Returns a new array; the input is not modified. If ``cfg.enabled`` is False
+    the (copied) input is returned unchanged -- callers should pass an already
+    max-normalized density, as :func:`elutediff.targets.density.gaussian_density`
+    produces.
     """
     density = np.asarray(density, dtype=float).copy()
     if not cfg.enabled:
