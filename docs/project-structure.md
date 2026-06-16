@@ -16,6 +16,7 @@ elutediff/
 │   ├── download_metlin.py    # step 1: fetch METLIN SMRT
 │   ├── build_targets.py      # step 2: (prompt, RT-density target) JSONL
 │   ├── tokenizer_audit.py    # step 3: MANDATORY canvas-budget check
+│   ├── train_baselines.py    # step 4: B1/B2 known-bar regressors + metrics
 │   ├── train_diffusion.py    # step 5: Unsloth/LoRA block-diffusion fine-tune
 │   └── evaluate.py           # step 8: denoising-step sweep + metrics
 ├── src/elutediff/
@@ -36,7 +37,8 @@ elutediff/
 │   │   └── graph_features.py #   LapPE (sign-canonicalized)              [scaffold]
 │   ├── models/
 │   │   ├── diffusion.py      #   Unsloth FastModel + LoRA loaders       [wired]
-│   │   └── baselines.py      #   B1-B3 ECFP/MLP/GNN                      [scaffold]
+│   │   ├── baselines.py      #   B1/B2 ECFP/MLP + conformal/ensemble     [implemented]
+│   │   └── gnn.py            #   B3 GINE/graph-transformer (graph extra) [wired]
 │   ├── training/
 │   │   ├── block_diffusion.py#   corrupt-canvas objective + train loop  [wired]
 │   │   └── sampling.py        #   multi-step denoising generation        [wired]
@@ -68,7 +70,7 @@ needs numpy/scipy/pandas/pyyaml. RDKit (`chem`), classical/GNN baselines
 | 1 | METLIN loader, canonicalization, descriptors, ECFP, splits | `data/` (done; LapPE pending) |
 | 2 | Clean + noisy RT-density target generators | `targets/`, `scripts/build_targets.py` |
 | 3 | Tokenizer-length audit; lock target format | `audit.py`, `scripts/tokenizer_audit.py` |
-| 4 | Scalar + graph baselines | `models/baselines.py` |
+| 4 | Scalar + graph baselines | `models/baselines.py` (B1/B2 done), `models/gnn.py` (B3), `scripts/train_baselines.py` |
 | 5 | Fine-tune center-bin / parameter / clean-vector | `models/diffusion.py`, `training/`, `scripts/train_diffusion.py` |
 | 6 | Noisy-vector augmentation | `configs/b7_noisy_vector.yaml` |
 | 7 | LapPE conditioning + split evaluation | `data/graph_features.py`, `configs/b8_lappe.yaml` |
