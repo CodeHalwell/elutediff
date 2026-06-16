@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Testing / tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Data & artifacts (keep dir structure via .gitkeep, ignore contents)
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+*.sdf
+*.csv
+*.parquet
+*.feather
+
+# Model checkpoints / adapters
+diffusiongemma_lora/
+checkpoints/
+runs/
+wandb/
+*.safetensors
+*.gguf
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,18 @@
+# B7: clean Gaussian + weak baseline noise (augmentation/stress only, never a
+# claim of real chromatographic signal). Does it help robustness or hurt decoding?
+experiment: b7_noisy_vector
+metlin_path: data/raw/metlin_smrt
+target:
+  bin_width: 10.0
+  sigma: 20.0
+noise:
+  enabled: true
+  floor: 0.02
+  drift: 0.01
+  spike_prob: 0.02
+  spike_scale: 0.1
+  seed: 0
+conditioning:
+  level: 1
+train:
+  output_dir: runs/b7_noisy_vector

@@ -1,0 +1,11 @@
+# B4 control: spike-like target (sigma == bin width) -> argmax collapses to the
+# center bin. Tests whether the full vector earns its complexity at all.
+experiment: b4_center_bin
+metlin_path: data/raw/metlin_smrt
+target:
+  bin_width: 10.0
+  sigma: 10.0         # spike: behaves like a center-bin label
+conditioning:
+  level: 1
+train:
+  output_dir: runs/b4_center_bin
