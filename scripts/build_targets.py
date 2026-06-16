@@ -3,9 +3,10 @@
 
 Pipeline per molecule:
   RT (s)  -> gaussian_density -> [apply_noise] -> quantize -> target_string
-  SMILES (+descriptors/+graph) -> build_prompt
+  SMILES (+descriptors/+atom-bond/+LapPE) -> build_prompt
 
-Writes a JSONL of {"prompt", "target", "rt", "smiles", "split"} rows ready for
+Applies the configured split (random/scaffold/cluster) and writes a JSONL of
+{"smiles", "rt", "pubchem", "split", "prompt", "target"} rows ready for
 elutediff.training.block_diffusion.build_examples.
 """
 
@@ -17,8 +18,10 @@ from pathlib import Path
 
 from elutediff.config import Config, load_config
 from elutediff.data.metlin import load_metlin
+from elutediff.data.molecules import atom_bond_table, compute_descriptors
+from elutediff.data.splits import make_split
 from elutediff.serialization.prompts import build_prompt, target_string
-from elutediff.targets.density import gaussian_density
+from elutediff.targets.density import clipped_fraction, gaussian_density
 from elutediff.targets.noise import apply_noise
 from elutediff.targets.quantize import quantize
 
@@ -30,24 +33,47 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg: Config = load_config(args.config)
-    molecules = load_metlin(cfg.metlin_path)  # NotImplementedError until step 1 is done
+    molecules, stats = load_metlin(cfg.metlin_path, return_stats=True)
+    print(stats)
 
+    smiles = [m.smiles for m in molecules]
+    rts = [m.rt_seconds for m in molecules]
+    print(f"clipped fraction (RT outside grid): {clipped_fraction(rts, cfg.target):.4f}")
+
+    split = make_split(smiles, cfg.split)
+    fold_of = {}
+    for name, idxs in (("train", split.train_idx), ("val", split.val_idx), ("test", split.test_idx)):
+        for i in idxs:
+            fold_of[i] = name
+    print(f"split sizes (train/val/test): {split.sizes()}")
+
+    cond = cfg.conditioning
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w") as fh:
-        for mol in molecules:
-            density = gaussian_density(mol.rt_seconds, cfg.target)
-            density = apply_noise(density, cfg.noise)
+        for i, mol in enumerate(molecules):
+            density = apply_noise(gaussian_density(mol.rt_seconds, cfg.target), cfg.noise)
             levels = quantize(density, cfg.target)
+
+            descriptors = compute_descriptors(mol.smiles, cond.descriptors) if cond.level >= 2 else None
+            atoms_bonds = atom_bond_table(mol.smiles) if cond.level >= 3 else None
+            # LapPE (level >= 4) is wired in data/graph_features.py at roadmap step 7.
+
             row = {
                 "smiles": mol.smiles,
                 "rt": mol.rt_seconds,
+                "pubchem": mol.pubchem_id,
+                "split": fold_of.get(i, "train"),
                 "prompt": build_prompt(
-                    smiles=mol.smiles, target_cfg=cfg.target, cond_cfg=cfg.conditioning
+                    smiles=mol.smiles,
+                    target_cfg=cfg.target,
+                    cond_cfg=cond,
+                    descriptors=descriptors,
+                    atom_bond_table=atoms_bonds,
                 ),
                 "target": target_string(levels, cfg.target),
             }
             fh.write(json.dumps(row) + "\n")
-    print(f"wrote targets -> {args.out}")
+    print(f"wrote {len(molecules)} rows -> {args.out}")
     return 0
 
 

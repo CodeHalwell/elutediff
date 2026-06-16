@@ -29,11 +29,11 @@ elutediff/
 │   ├── serialization/        # canvas I/O
 │   │   ├── prompts.py        #   conditioning prompts + target render   [implemented]
 │   │   └── parser.py         #   strict parser + validity + RT decode   [implemented]
-│   ├── data/                 # METLIN + RDKit featurization             [scaffold]
-│   │   ├── metlin.py         #   load/canonicalize records
-│   │   ├── molecules.py      #   descriptors, ECFP, atom/bond table
-│   │   ├── graph_features.py #   LapPE (sign-canonicalized)
-│   │   └── splits.py         #   random / scaffold / Tanimoto cluster
+│   ├── data/                 # METLIN + RDKit featurization
+│   │   ├── metlin.py         #   load/canonicalize records (SDF/CSV)     [implemented]
+│   │   ├── molecules.py      #   descriptors, ECFP, atom/bond table      [implemented]
+│   │   ├── splits.py         #   random / scaffold / Tanimoto cluster    [implemented]
+│   │   └── graph_features.py #   LapPE (sign-canonicalized)              [scaffold]
 │   ├── models/
 │   │   ├── diffusion.py      #   Unsloth FastModel + LoRA loaders       [wired]
 │   │   └── baselines.py      #   B1-B3 ECFP/MLP/GNN                      [scaffold]
@@ -48,7 +48,8 @@ elutediff/
 └── tests/                    # cover the implemented CPU-only core
 ```
 
-**Implemented** = full + unit-tested (CPU, numpy only). **Wired** = real
+**Implemented** = full + unit-tested on CPU (numpy core; the `data/` modules use
+RDKit from the `chem` extra). **Wired** = real
 DiffusionGemma/Unsloth code ported from the reference Sudoku notebook, runnable
 once the `train` extra and a GPU are present. **Scaffold** = typed interface +
 docstring; needs RDKit / GNN deps (roadmap steps 1, 4, 7).
@@ -64,7 +65,7 @@ needs numpy/scipy/pandas/pyyaml. RDKit (`chem`), classical/GNN baselines
 
 | Step | Proposal item | Where |
 |------|---------------|-------|
-| 1 | Parser, canonicalization, descriptors, graph features, splits | `data/` |
+| 1 | METLIN loader, canonicalization, descriptors, ECFP, splits | `data/` (done; LapPE pending) |
 | 2 | Clean + noisy RT-density target generators | `targets/`, `scripts/build_targets.py` |
 | 3 | Tokenizer-length audit; lock target format | `audit.py`, `scripts/tokenizer_audit.py` |
 | 4 | Scalar + graph baselines | `models/baselines.py` |
