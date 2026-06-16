@@ -3,6 +3,7 @@
 These modules depend on RDKit (install the ``chem`` extra).
 """
 
+from elutediff.data.graph_features import laplacian_eigenvectors, serialize_lappe
 from elutediff.data.metlin import LoadStats, Molecule, load_metlin
 from elutediff.data.molecules import (
     InvalidMoleculeError,
@@ -24,4 +25,6 @@ __all__ = [
     "InvalidMoleculeError",
     "Split",
     "make_split",
+    "laplacian_eigenvectors",
+    "serialize_lappe",
 ]

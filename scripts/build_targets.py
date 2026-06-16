@@ -18,6 +18,7 @@ from pathlib import Path
 
 from elutediff.config import Config, load_config
 from elutediff.data.metlin import load_metlin
+from elutediff.data.graph_features import serialize_lappe
 from elutediff.data.molecules import atom_bond_table, compute_descriptors
 from elutediff.data.splits import make_split
 from elutediff.serialization.prompts import build_prompt, target_string
@@ -56,7 +57,9 @@ def main() -> int:
 
             descriptors = compute_descriptors(mol.smiles, cond.descriptors) if cond.level >= 2 else None
             atoms_bonds = atom_bond_table(mol.smiles) if cond.level >= 3 else None
-            # LapPE (level >= 4) is wired in data/graph_features.py at roadmap step 7.
+            # Deterministic (canonical-sign) LapPE here; apply sign-flip
+            # augmentation on the fly in the training loop, not in the JSONL.
+            lappe = serialize_lappe(mol.smiles, cond, training=False) if cond.level >= 4 else None
 
             row = {
                 "smiles": mol.smiles,
@@ -69,6 +72,7 @@ def main() -> int:
                     cond_cfg=cond,
                     descriptors=descriptors,
                     atom_bond_table=atoms_bonds,
+                    lappe=lappe,
                 ),
                 "target": target_string(levels, cfg.target),
             }
