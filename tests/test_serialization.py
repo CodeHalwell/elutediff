@@ -42,7 +42,7 @@ def test_parse_rejects_wrong_length():
 def test_parse_rejects_malformed_token_strict():
     cfg, levels = _levels()
     toks = target_string(levels, cfg).split()
-    toks[0] = "5"  # not fixed-width
+    toks[0] = "55"  # wrong width (two digits where the canvas uses one)
     res = parse_rt_vector(" ".join(toks), cfg)
     assert not res.ok
 

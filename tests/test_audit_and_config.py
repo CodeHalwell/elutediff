@@ -1,7 +1,26 @@
 from pathlib import Path
 
+import numpy as np
+
 from elutediff.audit import audit_target, sweep_bin_widths
 from elutediff.config import Config, TargetConfig, load_config
+from elutediff.serialization.prompts import target_string
+from elutediff.targets.density import gaussian_density
+from elutediff.targets.quantize import quantize
+
+
+def test_default_target_fits_canvas_under_real_tokenization():
+    """Regression for the canvas overflow: the Gemma tokenizer emits ~one token
+    per character (each digit and each separating space), so the real target
+    length is ``len(target_string) + 1`` (eos), *not* the optimistic one-token-
+    per-bin estimate. The default single-digit config must fit the 256 canvas;
+    the old 3-digit default produced ~479 tokens and silently dropped every row.
+    """
+    cfg = TargetConfig()  # defaults: 120 bins, single-digit levels
+    levels = quantize(gaussian_density(600.0, cfg), cfg)
+    text = target_string(levels, cfg)
+    assert max(len(t) for t in text.split()) == 1  # one digit per bin
+    assert len(text) + 1 <= Config().model.canvas_length
 
 
 def test_default_target_fits_canvas():

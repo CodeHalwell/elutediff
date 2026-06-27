@@ -28,8 +28,12 @@ class TargetConfig:
     rt_max: float = 1200.0       # seconds; 99-99.5th percentile in practice
     bin_width: float = 10.0      # seconds per bin (try 5 s if token budget allows)
     sigma: float = 20.0          # Gaussian width in seconds (>= 2-3 bins)
-    scale: int = 100             # quantization levels: integers 000..scale
-    token_width: int = 3         # fixed-width zero-padded tokens ("000".."100")
+    # One token per bin is a hard constraint of the block-diffusion canvas: the
+    # Gemma tokenizer splits each digit into its own token, so a multi-digit
+    # level (e.g. "037" -> 3 tokens) blows the 256-token canvas at 120 bins.
+    # Single-digit levels (0..9) keep each bin to one token so the target fits.
+    scale: int = 9               # quantization levels: integers 0..scale (single digit)
+    token_width: int = 1         # single-digit tokens ("0".."9"), one token per bin
 
     @property
     def n_bins(self) -> int:
