@@ -6,8 +6,11 @@ serialization format. This module renders the target string for a given
 :class:`TargetConfig` and reports how many tokens it consumes.
 
 Two modes:
-  * design estimate (no model): assumes one token per fixed-width bin plus
-    separators -- the format is engineered to make this true.
+  * realistic estimate (no model): the Gemma tokenizer emits roughly one token
+    per *character* -- every digit of a level and every separating space -- so
+    the canvas cost is ``len(target_string) + eos``. A naive one-token-per-bin
+    count hides the truth: 120 three-digit bins are ~480 tokens, not 121, and
+    silently overflow the 256-token canvas.
   * measured (optional tokenizer): pass a HuggingFace tokenizer to count the
     real token length and flag any bin that is not exactly one token.
 """
@@ -28,7 +31,7 @@ from elutediff.targets.quantize import quantize
 class AuditResult:
     n_bins: int
     canvas_length: int
-    est_target_tokens: int      # one-token-per-bin design estimate (+ eos)
+    est_target_tokens: int      # realistic per-character estimate len(text)+eos
     measured_tokens: int | None  # real tokenizer length, if provided
     fits_canvas: bool
     one_token_per_bin: bool | None  # measured: is every bin a single token?
@@ -59,8 +62,11 @@ def audit_target(
     levels = quantize(gaussian_density(example_rt, cfg), cfg)
     text = target_string(levels, cfg)
 
-    # Design estimate: one token per bin + one eos token.
-    est = cfg.n_bins + 1
+    # Realistic estimate: the Gemma tokenizer emits one token per character
+    # (each digit of a level AND each separating space), so the real canvas cost
+    # is len(text) + eos -- NOT the naive one-token-per-bin count. Multi-digit
+    # levels therefore overflow the budget (120 three-digit bins ~= 480 tokens).
+    est = len(text) + 1  # + eos
 
     measured = None
     one_per_bin = None
