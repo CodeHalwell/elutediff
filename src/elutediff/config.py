@@ -28,8 +28,38 @@ class TargetConfig:
     rt_max: float = 1200.0       # seconds; 99-99.5th percentile in practice
     bin_width: float = 10.0      # seconds per bin (try 5 s if token budget allows)
     sigma: float = 20.0          # Gaussian width in seconds (>= 2-3 bins)
-    scale: int = 100             # quantization levels: integers 000..scale
-    token_width: int = 3         # fixed-width zero-padded tokens ("000".."100")
+    # One token per bin is a hard constraint of the block-diffusion canvas: the
+    # Gemma tokenizer splits each digit into its own token, so a multi-digit
+    # level (e.g. "037" -> 3 tokens) blows the 256-token canvas at 120 bins.
+    # Single-digit levels (0..9) keep each bin to one token so the target fits.
+    scale: int = 9               # quantization levels: integers 0..scale (single digit)
+    token_width: int = 1         # single-digit tokens ("0".."9"), one token per bin
+
+    def __post_init__(self) -> None:
+        """Reject configs that would silently break serialization/parsing.
+
+        The key check is ``scale < 10 ** token_width``: a level that does not fit
+        the fixed width (e.g. scale=10 at width=1) renders to too many digits and
+        desyncs the canvas budget -- the exact failure class that motivated the
+        single-digit default.
+        """
+        if self.rt_max <= self.rt_min:
+            raise ValueError(
+                f"rt_max ({self.rt_max}) must be greater than rt_min ({self.rt_min})"
+            )
+        if self.bin_width <= 0:
+            raise ValueError(f"bin_width ({self.bin_width}) must be positive")
+        if self.sigma <= 0:
+            raise ValueError(f"sigma ({self.sigma}) must be positive")
+        if self.scale < 0:
+            raise ValueError(f"scale ({self.scale}) must be non-negative")
+        if self.token_width < 1:
+            raise ValueError(f"token_width ({self.token_width}) must be at least 1")
+        if self.scale >= 10 ** self.token_width:
+            raise ValueError(
+                f"scale ({self.scale}) cannot be represented with token_width "
+                f"({self.token_width}); max is {10 ** self.token_width - 1}"
+            )
 
     @property
     def n_bins(self) -> int:

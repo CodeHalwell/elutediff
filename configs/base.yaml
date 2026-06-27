@@ -8,8 +8,8 @@ target:
   rt_max: 1200.0      # ~99-99.5th RT percentile; report clipped fraction
   bin_width: 10.0     # audit 5 s once 10 s is locked
   sigma: 20.0         # >= 2-3 bins so the density is resolved
-  scale: 100          # integer levels 000..100
-  token_width: 3
+  scale: 9            # single-digit levels 0..9 (one token per bin; see TargetConfig)
+  token_width: 1      # multi-digit tokens overflow the 256-token canvas at 120 bins
 
 noise:
   enabled: false
