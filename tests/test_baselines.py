@@ -15,6 +15,11 @@ from elutediff.models.baselines import (
     featurize_ecfp,
 )
 
+# These baselines need the optional `baselines` extra (scikit-learn, xgboost).
+# Skip the whole module if it isn't installed so a bare `[dev]` `pytest` passes.
+pytest.importorskip("sklearn")
+pytest.importorskip("xgboost")
+
 # A learnable structure->RT signal: linear chains of increasing length, with RT
 # driven by molecular weight (a real retention-relevant property), plus noise.
 SMILES = [("C" * n) for n in range(2, 24)] + [("C" * n + "O") for n in range(1, 23)]

@@ -38,7 +38,8 @@ def main() -> int:
     examples = build_examples(rows, processor, cfg.model)
     print(f"usable examples: {len(examples)} / {len(rows)} (rest overflow the canvas)")
 
-    model = train(model, examples, cfg.model, cfg.train)
+    model = train(model, examples, cfg.model, cfg.train,
+                  processor=processor, target_cfg=cfg.target)
     model.save_pretrained(cfg.train.output_dir)
     processor.save_pretrained(cfg.train.output_dir)
     print(f"saved LoRA adapter -> {cfg.train.output_dir}")

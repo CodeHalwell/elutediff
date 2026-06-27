@@ -52,7 +52,10 @@ def main() -> int:
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as fh:
         for i, mol in enumerate(molecules):
-            density = apply_noise(gaussian_density(mol.rt_seconds, cfg.target), cfg.noise)
+            # Per-molecule seed so augmentation is independent per row (not one
+            # fixed spike pattern stamped on every molecule).
+            density = apply_noise(gaussian_density(mol.rt_seconds, cfg.target),
+                                  cfg.noise, seed=(cfg.noise.seed, i))
             levels = quantize(density, cfg.target)
 
             descriptors = compute_descriptors(mol.smiles, cond.descriptors) if cond.level >= 2 else None
