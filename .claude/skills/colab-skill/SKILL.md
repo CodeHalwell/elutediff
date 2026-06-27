@@ -20,11 +20,11 @@ Operate Google Colab environments via the `colab` CLI: provision GPU/TPU session
 - **ADC setup** (most reliable for headless/agent use). The Colab backends need a specific scope set, so re-mint ADC with all four scopes:
   ```bash
   gcloud auth application-default login \
-    --scopes=openid,\
-  https://www.googleapis.com/auth/cloud-platform,\
-  https://www.googleapis.com/auth/userinfo.email,\
-  https://www.googleapis.com/auth/colaboratory
+    --scopes=openid,https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/colaboratory
   ```
+  (Keep the comma-separated scopes on a single line — splitting them across
+  backslash-continued lines folds the leading indentation into the scope values
+  and silently corrupts the list.)
   Why all four: `userinfo.email` (session backend `colab.research.google.com`, else 401), `colaboratory` (RuntimeService `colab.pa.googleapis.com` keep-alive, else 403), `openid`+`cloud-platform` (mandated by gcloud itself; it rejects scope lists missing `cloud-platform`).
 - **oauth2 setup**: `colab --auth=oauth2 <anything>` triggers a browser consent flow on first use (token cached at `~/.config/colab-cli/token.json`). Requires a client config at `~/.colab-cli-oauth-config.json` (or `-c PATH`). The browser step means it usually needs a human; prefer ADC for agents.
 - **Verify auth in one shot**: `colab sessions` (read-only, lists server assignments) or `colab whoami` (hidden debug command: prints the active email, scopes, audience, and expiry). When any call 403s against `colab.pa.googleapis.com`, the cause is almost always a missing scope — `colab whoami` shows it instantly.
@@ -40,10 +40,10 @@ Operate Google Colab environments via the `colab` CLI: provision GPU/TPU session
 - Accelerator availability is tier-gated; most accounts can only get CPU. Don't assume a GPU/TPU will allocate.
 - **The `--gpu` flag picks a *family*, not an exact card — always verify the real hardware after `new`.** Observed (June 2026): `--gpu A100` allocated a **40 GB** A100-SXM4 (not the 80 GB variant), while `--gpu G4` allocated an **RTX PRO 6000 Blackwell with ~96 GB VRAM, ~177 GB system RAM, 48 vCPU** — effectively the "high-RAM" shape, and a bigger card than the A100 you'd reach for. There is **no CLI flag for "high-RAM" or for the 80 GB A100**; the shape is tied to the GPU family + subscription tier. For a model that needs >40 GB VRAM, `G4` may be the right pick over `A100`. Confirm with one probe right after `new`:
   ```bash
-  echo "import subprocess
-  print(subprocess.run(['nvidia-smi','--query-gpu=name,memory.total','--format=csv,noheader'],capture_output=True,text=True).stdout)
-  print('RAM GB:', round(int(open('/proc/meminfo').readline().split()[1])/1024/1024,1))" | colab exec -s <name>
+  echo 'import subprocess; print(subprocess.run(["nvidia-smi","--query-gpu=name,memory.total","--format=csv,noheader"],capture_output=True,text=True).stdout); print("RAM GB:", round(int(open("/proc/meminfo").readline().split()[1])/1024/1024,1))' | colab exec -s <name>
   ```
+  (Keep the probe on one line — multi-line snippets piped via `echo` reach Python
+  with leading indentation and raise `IndentationError`.)
   A failed allocation is unassigned (not billed), so probing entitlement is safe.
 
 ### Execute
