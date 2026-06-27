@@ -45,7 +45,7 @@ def test_quantize_roundtrip_levels_and_tokens():
 
 
 def test_dequantize_inverse():
-    cfg = TargetConfig(scale=100)
+    cfg = TargetConfig(scale=100, token_width=3)
     levels = np.array([0, 50, 100])
     assert np.allclose(dequantize(levels, cfg), [0.0, 0.5, 1.0])
 

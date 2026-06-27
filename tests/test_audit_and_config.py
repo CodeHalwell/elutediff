@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import numpy as np
+import pytest
 
 from elutediff.audit import audit_target, sweep_bin_widths
 from elutediff.config import Config, TargetConfig, load_config
@@ -9,12 +9,14 @@ from elutediff.targets.density import gaussian_density
 from elutediff.targets.quantize import quantize
 
 
-def test_default_target_fits_canvas_under_real_tokenization():
-    """Regression for the canvas overflow: the Gemma tokenizer emits ~one token
-    per character (each digit and each separating space), so the real target
-    length is ``len(target_string) + 1`` (eos), *not* the optimistic one-token-
-    per-bin estimate. The default single-digit config must fit the 256 canvas;
-    the old 3-digit default produced ~479 tokens and silently dropped every row.
+def test_default_target_fits_canvas_under_char_upper_bound():
+    """Regression for the canvas overflow. The Gemma tokenizer emits at most one
+    token per character (each digit and each separating space), so
+    ``len(target_string) + 1`` (eos) is a conservative upper bound on the real
+    token length -- enough to guarantee the canvas fits without loading the
+    tokenizer. The default single-digit config must stay under the 256 canvas;
+    the old 3-digit default produced ~479 characters and silently dropped every
+    row.
     """
     cfg = TargetConfig()  # defaults: 120 bins, single-digit levels
     levels = quantize(gaussian_density(600.0, cfg), cfg)
@@ -53,6 +55,20 @@ def test_three_digit_levels_overflow_is_caught():
     assert res.n_bins == 120
     assert res.est_target_tokens > 256
     assert not res.fits_canvas
+
+
+def test_target_config_validation():
+    # A level that overflows its fixed width is the bug this guards against.
+    with pytest.raises(ValueError, match="cannot be represented with token_width"):
+        TargetConfig(scale=10, token_width=1)
+    with pytest.raises(ValueError, match="must be greater than rt_min"):
+        TargetConfig(rt_min=100.0, rt_max=50.0)
+    with pytest.raises(ValueError, match="bin_width.*must be positive"):
+        TargetConfig(bin_width=0.0)
+    with pytest.raises(ValueError, match="sigma.*must be positive"):
+        TargetConfig(sigma=-5.0)
+    with pytest.raises(ValueError, match="token_width.*must be at least 1"):
+        TargetConfig(token_width=0)
 
 
 def test_sweep_returns_one_per_width():

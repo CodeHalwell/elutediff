@@ -35,6 +35,32 @@ class TargetConfig:
     scale: int = 9               # quantization levels: integers 0..scale (single digit)
     token_width: int = 1         # single-digit tokens ("0".."9"), one token per bin
 
+    def __post_init__(self) -> None:
+        """Reject configs that would silently break serialization/parsing.
+
+        The key check is ``scale < 10 ** token_width``: a level that does not fit
+        the fixed width (e.g. scale=10 at width=1) renders to too many digits and
+        desyncs the canvas budget -- the exact failure class that motivated the
+        single-digit default.
+        """
+        if self.rt_max <= self.rt_min:
+            raise ValueError(
+                f"rt_max ({self.rt_max}) must be greater than rt_min ({self.rt_min})"
+            )
+        if self.bin_width <= 0:
+            raise ValueError(f"bin_width ({self.bin_width}) must be positive")
+        if self.sigma <= 0:
+            raise ValueError(f"sigma ({self.sigma}) must be positive")
+        if self.scale < 0:
+            raise ValueError(f"scale ({self.scale}) must be non-negative")
+        if self.token_width < 1:
+            raise ValueError(f"token_width ({self.token_width}) must be at least 1")
+        if self.scale >= 10 ** self.token_width:
+            raise ValueError(
+                f"scale ({self.scale}) cannot be represented with token_width "
+                f"({self.token_width}); max is {10 ** self.token_width - 1}"
+            )
+
     @property
     def n_bins(self) -> int:
         """Number of equal-width bins covering [rt_min, rt_max)."""
