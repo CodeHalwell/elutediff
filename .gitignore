@@ -34,6 +34,11 @@ wandb/
 
 # Notebooks
 .ipynb_checkpoints/
+# colab exec writes <nb>_output.ipynb next to the input
+*_output.ipynb
+
+# Claude Code local (machine-specific settings; skills are tracked)
+.claude/settings.local.json
 
 # OS / editor
 .DS_Store
