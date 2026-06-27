@@ -71,6 +71,21 @@ def test_target_config_validation():
         TargetConfig(token_width=0)
 
 
+def test_encoding_and_peak_loss_validation():
+    from elutediff.config import TrainConfig
+
+    # Arm 1: target encoding
+    TargetConfig(encoding="cdf")  # ok
+    with pytest.raises(ValueError, match="encoding must be"):
+        TargetConfig(encoding="bogus")
+    # Arm 2: peak-aware loss
+    TrainConfig(peak_loss="emd", peak_lambda=0.5)  # ok
+    with pytest.raises(ValueError, match="peak_loss must be"):
+        TrainConfig(peak_loss="bogus")
+    with pytest.raises(ValueError, match="peak_lambda"):
+        TrainConfig(peak_lambda=-1.0)
+
+
 def test_sweep_returns_one_per_width():
     res = sweep_bin_widths(TargetConfig(), bin_widths=(10.0, 5.0))
     assert len(res) == 2

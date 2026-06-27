@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from elutediff.config import TargetConfig
-from elutediff.targets.quantize import dequantize
+from elutediff.targets.quantize import dequantize, emitted_to_density
 
 # A token is exactly `token_width` digits; we extract them from possibly noisy text.
 _TOKEN_RE = re.compile(r"\d+")
@@ -56,13 +56,14 @@ def parse_rt_vector(text: str, cfg: TargetConfig, strict: bool = True) -> ParseR
     if len(levels) < cfg.n_bins:
         return ParseResult(False, None, f"too few tokens: {len(levels)} < {cfg.n_bins}")
 
-    arr = np.asarray(levels, dtype=int)
+    arr = np.asarray(levels, dtype=int)  # emitted levels (PDF or CDF ramp)
     if arr.max(initial=0) > cfg.scale:
         if strict:
             return ParseResult(False, None, f"level exceeds scale {cfg.scale}")
         arr = np.clip(arr, 0, cfg.scale)
 
-    return ParseResult(True, arr)
+    # Decode the configured encoding so callers always receive a PDF.
+    return ParseResult(True, emitted_to_density(arr, cfg))
 
 
 def validity_report(levels: np.ndarray, cfg: TargetConfig) -> dict:

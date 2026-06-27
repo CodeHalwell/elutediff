@@ -98,6 +98,23 @@ def test_decoded_rt_argmax_near_truth():
     assert abs(centroid - 730.0) <= 2 * cfg.bin_width
 
 
+def test_cdf_encoding_is_monotone_and_preserves_peak():
+    from elutediff.targets.quantize import density_to_emitted
+
+    cfg = TargetConfig(bin_width=10.0, sigma=20.0, encoding="cdf")
+    levels = quantize(gaussian_density(600.0, cfg), cfg)
+    emitted = density_to_emitted(levels, cfg)
+    # Thermometer ramp: monotone non-decreasing, within [0, scale].
+    assert np.all(np.diff(emitted) >= 0)
+    assert emitted.min() >= 0 and emitted.max() <= cfg.scale
+    # Same token budget as the density encoding (one digit per bin).
+    assert len(target_string(levels, cfg).split()) == cfg.n_bins
+    # Round-trip through tokens recovers a PDF whose peak matches (within 1 bin).
+    res = parse_rt_vector(target_string(levels, cfg), cfg)
+    assert res.ok
+    assert abs(int(np.argmax(res.levels)) - int(np.argmax(levels))) <= 1
+
+
 def test_build_prompt_levels():
     cfg = TargetConfig()
     p1 = build_prompt(smiles="CCO", target_cfg=cfg, cond_cfg=ConditioningConfig(level=1))

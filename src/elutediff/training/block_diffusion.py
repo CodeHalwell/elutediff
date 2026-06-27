@@ -55,8 +55,56 @@ def build_examples(rows, processor, model_cfg: ModelConfig):
     return out
 
 
-def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
-    """Run the block-diffusion fine-tuning loop. Returns the trained ``model``."""
+def _digit_id_value_tensors(processor, scale, dev):
+    """Token ids for the single-digit levels ``0..scale`` and their float values."""
+    import torch
+
+    tok = processor.tokenizer if hasattr(processor, "tokenizer") else processor
+    ids = [tok.encode(str(d), add_special_tokens=False)[0] for d in range(scale + 1)]
+    return (torch.tensor(ids, device=dev),
+            torch.arange(scale + 1, device=dev, dtype=torch.float32))
+
+
+def _peak_loss(logits, x0, digit_ids, values, encoding, mode):
+    """Differentiable peak-aware loss on the soft density decoded from logits.
+
+    Restricts to the bin positions (where the clean target is a digit token),
+    forms the expected emitted level per bin from a softmax over the digit tokens,
+    decodes to a PDF (first-difference for the CDF encoding), then scores the
+    predicted vs true PDF by 1-D Wasserstein (``emd``) or soft-argmax MSE.
+    """
+    import torch
+
+    is_bin = torch.isin(x0, digit_ids)
+    if int(is_bin.sum()) < 2:
+        return logits.new_zeros(())
+    lb = logits[is_bin][:, digit_ids]          # [B, scale+1]
+    p = torch.softmax(lb, dim=-1)
+    pred_emit = (p * values).sum(-1)           # expected emitted level per bin
+    onehot = (x0[is_bin][:, None] == digit_ids[None, :]).to(values.dtype)
+    true_emit = (onehot * values).sum(-1)
+    if encoding == "cdf":
+        pred_d = torch.relu(pred_emit[1:] - pred_emit[:-1])
+        true_d = torch.relu(true_emit[1:] - true_emit[:-1])
+    else:
+        pred_d, true_d = pred_emit, true_emit
+    eps = 1e-8
+    pn = pred_d / (pred_d.sum() + eps)
+    tn = true_d / (true_d.sum() + eps)
+    if mode == "emd":
+        return torch.abs(torch.cumsum(pn, 0) - torch.cumsum(tn, 0)).sum()
+    idx = torch.arange(pn.numel(), device=pn.device, dtype=pn.dtype)
+    return ((pn * idx).sum() - (tn * idx).sum()) ** 2
+
+
+def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig,
+          processor=None, target_cfg=None):
+    """Run the block-diffusion fine-tuning loop. Returns the trained ``model``.
+
+    When ``train_cfg.peak_loss`` is enabled, ``processor`` and ``target_cfg`` are
+    required (to map digit tokens to levels and read the encoding); the auxiliary
+    ``peak_lambda * peak_loss`` term is added to the denoising cross-entropy.
+    """
     import torch
 
     canvas_len = model_cfg.canvas_length
@@ -65,6 +113,14 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
         (p.device for p in model.parameters() if p.device.type != "meta"),
         torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     )
+
+    peak_mode = getattr(train_cfg, "peak_loss", "none")
+    digit_ids = values = encoding = None
+    if peak_mode != "none":
+        if processor is None or target_cfg is None:
+            raise ValueError("peak_loss requires processor and target_cfg")
+        digit_ids, values = _digit_id_value_tensors(processor, target_cfg.scale, dev)
+        encoding = getattr(target_cfg, "encoding", "density")
 
     # Seed both RNGs used by the loop (Python `random` for noise level + shuffle,
     # torch for the corruption mask/token sampling) for reproducible runs.
@@ -97,6 +153,7 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
     opt.zero_grad(set_to_none=True)
     for step in range(1, train_cfg.steps + 1):
         step_loss = 0.0
+        step_peak = 0.0
         for _ in range(train_cfg.grad_accum):
             if ptr >= len(order):
                 random.shuffle(order)
@@ -109,8 +166,14 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
                 self_conditioning_logits=None,
             )
             logits = out.logits[0].float()
+            x0d = x0.to(dev)
             m = lm.to(dev)
-            loss = torch.nn.functional.cross_entropy(logits[m], x0.to(dev)[m])
+            ce = torch.nn.functional.cross_entropy(logits[m], x0d[m])
+            loss = ce
+            if peak_mode != "none":
+                pk = _peak_loss(logits, x0d, digit_ids, values, encoding, peak_mode)
+                loss = ce + train_cfg.peak_lambda * pk
+                step_peak += float(pk) / train_cfg.grad_accum
             (loss / train_cfg.grad_accum).backward()
             step_loss += loss.item() / train_cfg.grad_accum
         torch.nn.utils.clip_grad_norm_(
@@ -120,7 +183,8 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig):
         sched.step()
         opt.zero_grad(set_to_none=True)
         if step % 20 == 0:
-            print(f"step {step:4d}/{train_cfg.steps} | loss {step_loss:.4f} "
+            extra = f" | peak {step_peak:.3f}" if peak_mode != "none" else ""
+            print(f"step {step:4d}/{train_cfg.steps} | loss {step_loss:.4f}{extra} "
                   f"| {time.time() - t0:.0f}s", flush=True)
     return model
 
