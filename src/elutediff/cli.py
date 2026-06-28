@@ -29,19 +29,25 @@ def cmd_audit(args) -> int:
     return 0
 
 
+def _not_wired(name: str, script: str, extra: str = "") -> int:
+    """A pipeline stage that lives in a script, not the CLI. Returns non-zero so
+    automation does not mistake the pointer message for a successful run."""
+    print(f"`elutediff {name}` is not wired into the CLI; run {script}{extra}",
+          file=sys.stderr)
+    return 2
+
+
 def cmd_build_targets(args) -> int:
-    print("build-targets: see scripts/build_targets.py (roadmap step 2).")
-    return 0
+    return _not_wired("build-targets", "scripts/build_targets.py (roadmap step 2)")
 
 
 def cmd_train(args) -> int:
-    print("train: see scripts/train_diffusion.py (roadmap step 5). Requires the 'train' extra + GPU.")
-    return 0
+    return _not_wired("train", "scripts/train_diffusion.py (roadmap step 5)",
+                      " -- requires the 'train' extra + GPU")
 
 
 def cmd_eval(args) -> int:
-    print("eval: see scripts/evaluate.py (roadmap step 8).")
-    return 0
+    return _not_wired("eval", "scripts/evaluate.py (roadmap step 8)")
 
 
 def build_parser() -> argparse.ArgumentParser:

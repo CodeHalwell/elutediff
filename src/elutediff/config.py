@@ -34,6 +34,13 @@ class TargetConfig:
     # Single-digit levels (0..9) keep each bin to one token so the target fits.
     scale: int = 9               # quantization levels: integers 0..scale (single digit)
     token_width: int = 1         # single-digit tokens ("0".."9"), one token per bin
+    # Target token encoding (ARM 1). "density" emits the (sparse) PDF directly --
+    # ~88% zeros, so token-CE is dominated by the background and ignores the peak.
+    # "cdf" emits the cumulative density (a monotonic 0..scale thermometer ramp):
+    # every bin is informative and a misplaced peak costs a whole run of wrong
+    # tokens, so plain CE becomes location-sensitive (the Sudoku-style dense
+    # target). The PDF is recovered by first-differencing on parse.
+    encoding: str = "density"    # "density" | "cdf"
 
     def __post_init__(self) -> None:
         """Reject configs that would silently break serialization/parsing.
@@ -60,6 +67,8 @@ class TargetConfig:
                 f"scale ({self.scale}) cannot be represented with token_width "
                 f"({self.token_width}); max is {10 ** self.token_width - 1}"
             )
+        if self.encoding not in ("density", "cdf"):
+            raise ValueError(f"encoding must be 'density' or 'cdf', got {self.encoding!r}")
 
     @property
     def n_bins(self) -> int:
@@ -123,6 +132,22 @@ class TrainConfig:
     warmup_pct: float = 0.03
     seed: int = 0
     output_dir: str = "diffusiongemma_lora"
+    # Peak-aware auxiliary loss (ARM 2). The denoising CE alone is background-
+    # dominated and learns peak location poorly. Add ``peak_lambda * peak_loss``
+    # computed on the differentiable soft-density decoded from the logits:
+    #   "emd"        -- 1-D Wasserstein (|CDF_pred - CDF_true|), distance-aware.
+    #   "softargmax" -- MSE on the expected (soft-argmax) peak bin.
+    # CE is always kept (it preserves valid generation); peak_loss only steers.
+    peak_loss: str = "none"      # "none" | "emd" | "softargmax"
+    peak_lambda: float = 0.0     # weight on the peak-aware term
+
+    def __post_init__(self) -> None:
+        if self.peak_loss not in ("none", "emd", "softargmax"):
+            raise ValueError(
+                f"peak_loss must be 'none', 'emd', or 'softargmax', got {self.peak_loss!r}"
+            )
+        if self.peak_lambda < 0:
+            raise ValueError(f"peak_lambda ({self.peak_lambda}) must be non-negative")
 
 
 @dataclass

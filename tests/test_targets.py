@@ -70,3 +70,13 @@ def test_noise_renormalizes_to_peak_one():
                                      spike_scale=0.2, seed=0))
     assert np.isclose(out.max(), 1.0)
     assert out.min() >= 0.0
+
+
+def test_noise_per_molecule_seed_is_independent_and_reproducible():
+    cfg = TargetConfig()
+    nc = NoiseConfig(enabled=True, floor=0.02, spike_prob=0.2, spike_scale=0.1, seed=0)
+    g = gaussian_density(600.0, cfg)
+    a = apply_noise(g, nc, seed=(nc.seed, 1))
+    b = apply_noise(g, nc, seed=(nc.seed, 2))
+    assert not np.allclose(a, b)                                   # different rows differ
+    assert np.allclose(a, apply_noise(g, nc, seed=(nc.seed, 1)))   # but reproducible

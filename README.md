@@ -24,8 +24,9 @@ ported from the reference Unsloth Sudoku notebook and runs once the `train` extr
 and a GPU are available.
 
 ```bash
-pip install -e ".[dev]"
-pytest
+pip install -e ".[dev]"            # core + pytest/ruff
+pytest                              # baseline tests auto-skip without the extra
+pip install -e ".[dev,baselines]"  # add scikit-learn/xgboost for the full suite
 elutediff -c configs/b6_clean_vector.yaml audit   # canvas budget check (CPU)
 ```
 
