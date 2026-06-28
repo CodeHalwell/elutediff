@@ -31,7 +31,7 @@ run on a Colab G4 via [`run_sweep.py`](run_sweep.py).
 | `cdf_emd_0.01` | cdf | emd (0.01) | 202.1 | −0.08 | 0.075 | 22% | 40/40 |
 | `cdf_emd_0.05` | cdf | emd (0.05) | 203.3 | −0.13 | 0.100 | 28% | 40/40 |
 | `cdf_softargmax_0.05` | cdf | softargmax (0.05) | — | — | — | 0% | **0/40** |
-| `density_emd_0.05` | density | emd (0.05) | *(pending re-run)* | | | | |
+| `density_emd_0.05` | density | emd (0.05) | **668.8** | **−5.71** | **0.034** | **0%** | 40/40 |
 
 ## Findings
 
@@ -52,6 +52,16 @@ run on a Colab G4 via [`run_sweep.py`](run_sweep.py).
 
 3. **`softargmax` is broken** — `0/40 valid`: it destroys the model's ability to
    emit parseable density vectors. Discard.
+
+4. **EMD alone does *not* rescue the sparse target — CDF is necessary, not just
+   helpful.** `density_emd_0.05` (sparse PDF + EMD) collapses to **exactly** the
+   control's numbers (MAE 668.835, R² −5.71, wp 0.034, identical to the decimal).
+   So adding the peak-aware loss to the *sparse* encoding does nothing: the
+   all-zeros collapse basin is too strong for EMD to escape (a degenerate
+   all-zeros prediction gives the EMD term no useful gradient). This cleanly
+   disentangles the two arms: **CDF encoding is necessary *and* sufficient to
+   break the collapse; EMD is only a secondary refinement that requires CDF to
+   have any effect.**
 
 ## Recommendation
 

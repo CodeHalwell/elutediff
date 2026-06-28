@@ -213,5 +213,48 @@
         }
       }
     }
+  },
+  "density_emd_0.05": {
+    "encoding": "density",
+    "peak": "emd",
+    "lambda": 0.05,
+    "evals": {
+      "500": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 668.835,
+          "r2": -5.708619919975356,
+          "tolerance_hits": {
+            "within_15s": 0.0,
+            "within_30s": 0.0,
+            "within_60s": 0.0
+          },
+          "window_prob": 0.03354166666666667
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      },
+      "1000": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 668.835,
+          "r2": -5.708619919975356,
+          "tolerance_hits": {
+            "within_15s": 0.0,
+            "within_30s": 0.0,
+            "within_60s": 0.0
+          },
+          "window_prob": 0.03354166666666667
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      }
+    }
   }
 }
