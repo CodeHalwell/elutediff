@@ -34,13 +34,16 @@ class TargetConfig:
     # Single-digit levels (0..9) keep each bin to one token so the target fits.
     scale: int = 9               # quantization levels: integers 0..scale (single digit)
     token_width: int = 1         # single-digit tokens ("0".."9"), one token per bin
-    # Target token encoding (ARM 1). "density" emits the (sparse) PDF directly --
-    # ~88% zeros, so token-CE is dominated by the background and ignores the peak.
-    # "cdf" emits the cumulative density (a monotonic 0..scale thermometer ramp):
-    # every bin is informative and a misplaced peak costs a whole run of wrong
-    # tokens, so plain CE becomes location-sensitive (the Sudoku-style dense
-    # target). The PDF is recovered by first-differencing on parse.
-    encoding: str = "density"    # "density" | "cdf"
+    # Target token encoding. "density" emits the (sparse) PDF directly -- ~88%
+    # zeros, so token-CE is dominated by the background and ignores the peak;
+    # the ablation (experiments/ablation-sweep) shows this COLLAPSES to a
+    # constant, molecule-agnostic output (MAE ~668 s, R^2 ~-5.7). "cdf" emits the
+    # cumulative density (a monotonic 0..scale thermometer ramp): every bin is
+    # informative and a misplaced peak costs a whole run of wrong tokens, so
+    # plain CE becomes location-sensitive (the Sudoku-style dense target). The
+    # PDF is recovered by first-differencing on parse. CDF is necessary AND
+    # sufficient to break the collapse (MAE ~198 s), so it is the default.
+    encoding: str = "cdf"        # "cdf" | "density"
 
     def __post_init__(self) -> None:
         """Reject configs that would silently break serialization/parsing.

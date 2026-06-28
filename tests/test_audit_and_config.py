@@ -71,6 +71,13 @@ def test_target_config_validation():
         TargetConfig(token_width=0)
 
 
+def test_default_encoding_is_cdf():
+    # The ablation showed the sparse "density" target collapses; CDF is the
+    # validated default that lets the model actually learn RT.
+    assert TargetConfig().encoding == "cdf"
+    assert Config().target.encoding == "cdf"
+
+
 def test_encoding_and_peak_loss_validation():
     from elutediff.config import TrainConfig
 

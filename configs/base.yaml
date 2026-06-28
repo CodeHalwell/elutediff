@@ -10,6 +10,7 @@ target:
   sigma: 20.0         # >= 2-3 bins so the density is resolved
   scale: 9            # single-digit levels 0..9 (one token per bin; see TargetConfig)
   token_width: 1      # multi-digit tokens overflow the 256-token canvas at 120 bins
+  encoding: cdf       # cumulative (dense) target; ablation shows "density" collapses
 
 noise:
   enabled: false
