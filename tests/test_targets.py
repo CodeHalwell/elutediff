@@ -35,7 +35,9 @@ def test_gaussian_spans_multiple_bins():
 
 
 def test_quantize_roundtrip_levels_and_tokens():
-    cfg = TargetConfig(bin_width=10.0, sigma=20.0, scale=100, token_width=3)
+    # density encoding: exact level<->token round-trip (CDF would be lossy)
+    cfg = TargetConfig(bin_width=10.0, sigma=20.0, scale=100, token_width=3,
+                       encoding="density")
     g = gaussian_density(600.0, cfg)
     levels = quantize(g, cfg)
     assert levels.max() == 100 and levels.min() >= 0

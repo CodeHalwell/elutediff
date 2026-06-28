@@ -12,7 +12,10 @@ from elutediff.targets.quantize import quantize
 
 
 def _levels(rt=600.0):
-    cfg = TargetConfig(bin_width=10.0, sigma=20.0)
+    # Pin density encoding: these tests assert *exact* token round-trips, which
+    # only hold for the lossless PDF encoding (CDF is rescaled+rounded). The CDF
+    # round-trip is covered separately by its peak-preservation test below.
+    cfg = TargetConfig(bin_width=10.0, sigma=20.0, encoding="density")
     return cfg, quantize(gaussian_density(rt, cfg), cfg)
 
 
