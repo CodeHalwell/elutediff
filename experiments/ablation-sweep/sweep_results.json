@@ -1,0 +1,217 @@
+{
+  "density_none": {
+    "encoding": "density",
+    "peak": "none",
+    "lambda": 0.0,
+    "evals": {
+      "500": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 668.835,
+          "r2": -5.708619919975356,
+          "tolerance_hits": {
+            "within_15s": 0.0,
+            "within_30s": 0.0,
+            "within_60s": 0.0
+          },
+          "window_prob": 0.03354166666666667
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      },
+      "1000": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 668.835,
+          "r2": -5.708619919975356,
+          "tolerance_hits": {
+            "within_15s": 0.0,
+            "within_30s": 0.0,
+            "within_60s": 0.0
+          },
+          "window_prob": 0.03354166666666667
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      }
+    }
+  },
+  "cdf_none": {
+    "encoding": "cdf",
+    "peak": "none",
+    "lambda": 0.0,
+    "evals": {
+      "500": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 201.565,
+          "r2": -0.0769804059948973,
+          "tolerance_hits": {
+            "within_15s": 0.05,
+            "within_30s": 0.1,
+            "within_60s": 0.225
+          },
+          "window_prob": 0.05
+        },
+        "16": {
+          "valid": 2,
+          "n": 40,
+          "mae": 180.14999999999998,
+          "r2": -0.30548824469120683,
+          "tolerance_hits": {
+            "within_15s": 0.0,
+            "within_30s": 0.0,
+            "within_60s": 0.0
+          },
+          "window_prob": 0.0
+        }
+      },
+      "1000": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 197.815,
+          "r2": 0.0109445920650183,
+          "tolerance_hits": {
+            "within_15s": 0.075,
+            "within_30s": 0.075,
+            "within_60s": 0.175
+          },
+          "window_prob": 0.075
+        },
+        "16": {
+          "valid": 40,
+          "n": 40,
+          "mae": 198.945,
+          "r2": -0.0077538264266059365,
+          "tolerance_hits": {
+            "within_15s": 0.075,
+            "within_30s": 0.075,
+            "within_60s": 0.2
+          },
+          "window_prob": 0.075
+        }
+      }
+    }
+  },
+  "cdf_emd_0.01": {
+    "encoding": "cdf",
+    "peak": "emd",
+    "lambda": 0.01,
+    "evals": {
+      "500": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 202.245,
+          "r2": -0.06462879414842515,
+          "tolerance_hits": {
+            "within_15s": 0.05,
+            "within_30s": 0.125,
+            "within_60s": 0.2
+          },
+          "window_prob": 0.05
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      },
+      "1000": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 202.065,
+          "r2": -0.08070413813334176,
+          "tolerance_hits": {
+            "within_15s": 0.075,
+            "within_30s": 0.1,
+            "within_60s": 0.225
+          },
+          "window_prob": 0.075
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      }
+    }
+  },
+  "cdf_emd_0.05": {
+    "encoding": "cdf",
+    "peak": "emd",
+    "lambda": 0.05,
+    "evals": {
+      "500": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 202.245,
+          "r2": -0.06462879414842515,
+          "tolerance_hits": {
+            "within_15s": 0.05,
+            "within_30s": 0.125,
+            "within_60s": 0.2
+          },
+          "window_prob": 0.05
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      },
+      "1000": {
+        "1": {
+          "valid": 40,
+          "n": 40,
+          "mae": 203.305,
+          "r2": -0.1308979545149187,
+          "tolerance_hits": {
+            "within_15s": 0.05,
+            "within_30s": 0.175,
+            "within_60s": 0.275
+          },
+          "window_prob": 0.1
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      }
+    }
+  },
+  "cdf_softargmax_0.05": {
+    "encoding": "cdf",
+    "peak": "softargmax",
+    "lambda": 0.05,
+    "evals": {
+      "500": {
+        "1": {
+          "valid": 0,
+          "n": 40
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      },
+      "1000": {
+        "1": {
+          "valid": 0,
+          "n": 40
+        },
+        "16": {
+          "valid": 0,
+          "n": 40
+        }
+      }
+    }
+  }
+}
