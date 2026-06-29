@@ -1,0 +1,158 @@
+{
+  "encoding": "cdf",
+  "peak_loss": "none",
+  "grad_accum": 4,
+  "steps": 4000,
+  "split": "scaffold",
+  "lr": 0.0001,
+  "schedule": "OneCycle cosine",
+  "sigma": 20.0,
+  "bin_width": 10.0,
+  "scale": 9,
+  "token_width": 1,
+  "canvas": 256,
+  "dataset": "METLIN SMRT (kept 79938/80038)",
+  "n_train": 63950,
+  "n_test": 7994,
+  "intermediate_eval_n": 40,
+  "final_eval_n": 200,
+  "note": "intermediate evals (500-3500) use 40 test mols (noisy); final @4000 uses 200 mols (reliable headline). Run executed in chunks across G4 VMs with resume-from-checkpoint.",
+  "control_density_none": {
+    "mae": 668.8,
+    "r2": -5.71,
+    "wp": 0.034
+  },
+  "curve": [
+    {
+      "step": 500,
+      "1": {
+        "mae": 203.2,
+        "r2": -0.03,
+        "wp": 0.051,
+        "within_60s": 0.18,
+        "valid": "39/40"
+      },
+      "16": {
+        "valid": "no valid"
+      }
+    },
+    {
+      "step": 1000,
+      "1": {
+        "mae": 200.6,
+        "r2": -0.084,
+        "wp": 0.075,
+        "within_60s": 0.18,
+        "valid": "40/40"
+      },
+      "16": {
+        "mae": 200.2,
+        "r2": -0.083,
+        "wp": 0.075,
+        "valid": "40/40"
+      }
+    },
+    {
+      "step": 1500,
+      "1": {
+        "mae": 180.1,
+        "r2": 0.065,
+        "wp": 0.132,
+        "within_60s": 0.26,
+        "valid": "40/40"
+      },
+      "16": {
+        "mae": 185.4,
+        "r2": 0.057,
+        "wp": 0.15,
+        "within_60s": 0.3,
+        "valid": "40/40"
+      }
+    },
+    {
+      "step": 2000,
+      "1": {
+        "mae": 192.2,
+        "r2": 0.086,
+        "wp": 0.075,
+        "within_60s": 0.3,
+        "valid": "40/40"
+      },
+      "16": {
+        "mae": 184.2,
+        "r2": 0.125,
+        "wp": 0.087,
+        "within_60s": 0.32,
+        "valid": "40/40"
+      }
+    },
+    {
+      "step": 2500,
+      "1": {
+        "mae": 175.0,
+        "r2": 0.233,
+        "wp": 0.1,
+        "within_60s": 0.2,
+        "valid": "40/40"
+      },
+      "16": {
+        "mae": 182.8,
+        "r2": 0.157,
+        "wp": 0.125,
+        "within_60s": 0.25,
+        "valid": "40/40"
+      }
+    },
+    {
+      "step": 3000,
+      "1": {
+        "mae": 151.4,
+        "r2": 0.383,
+        "wp": 0.125,
+        "valid": "40/40"
+      },
+      "16": {
+        "mae": 151.4,
+        "r2": 0.383,
+        "wp": 0.125,
+        "valid": "40/40"
+      }
+    },
+    {
+      "step": 3500,
+      "1": {
+        "mae": 146.4,
+        "r2": 0.418,
+        "wp": 0.175,
+        "valid": "40/40"
+      },
+      "16": {
+        "mae": 145.9,
+        "r2": 0.417,
+        "wp": 0.2,
+        "valid": "40/40"
+      }
+    },
+    {
+      "step": 4000,
+      "1": {
+        "mae": 126.8,
+        "r2": 0.498,
+        "wp": 0.099,
+        "valid": "200/200"
+      },
+      "16": {
+        "mae": 125.8,
+        "r2": 0.498,
+        "wp": 0.117,
+        "valid": "200/200"
+      },
+      "64": {
+        "mae": 125.8,
+        "r2": 0.498,
+        "wp": 0.117,
+        "valid": "200/200"
+      }
+    }
+  ]
+}
