@@ -50,13 +50,14 @@ class LoadStats:
     kept: int = 0
     unparseable: int = 0
     missing_rt: int = 0
+    unretained: int = 0
     duplicates: int = 0
 
     def __str__(self) -> str:
         return (
             f"METLIN load: kept {self.kept}/{self.total} "
             f"(unparseable={self.unparseable}, missing_rt={self.missing_rt}, "
-            f"duplicates={self.duplicates})"
+            f"unretained={self.unretained}, duplicates={self.duplicates})"
         )
 
 
@@ -80,12 +81,18 @@ def _parse_rt(value) -> float | None:
 
 
 def load_metlin(
-    path: str | Path, keep_mol_block: bool = False, return_stats: bool = False
+    path: str | Path,
+    keep_mol_block: bool = False,
+    return_stats: bool = False,
+    min_retention_s: float = 0.0,
 ):
     """Load METLIN SMRT records from ``path``.
 
     Canonicalizes SMILES, attaches RT in seconds, drops unparseable / RT-missing
-    records, and de-duplicates by canonical SMILES (first occurrence wins).
+    records, optionally drops void-time (unretained) compounds with
+    ``rt_seconds < min_retention_s`` (see :class:`~elutediff.config.DataConfig`;
+    the default 0.0 keeps everything, so the raw loader never silently filters),
+    and de-duplicates by canonical SMILES (first occurrence wins).
 
     Returns a ``list[Molecule]`` (or ``(molecules, LoadStats)`` if
     ``return_stats``).
@@ -101,6 +108,9 @@ def load_metlin(
     seen: set[str] = set()
     molecules: list[Molecule] = []
     for mol in records:
+        if mol.rt_seconds < min_retention_s:
+            stats.unretained += 1
+            continue
         if mol.smiles in seen:
             stats.duplicates += 1
             continue

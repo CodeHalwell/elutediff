@@ -81,6 +81,29 @@ class TargetConfig:
 
 
 @dataclass
+class DataConfig:
+    """Dataset construction / filtering (Section 2).
+
+    METLIN SMRT contains a ~2058-compound *void* cluster: unretained molecules
+    that elute at the column dead time, a sharp spike peaked at ~85-90 s and
+    separated from the retained population (which starts ~560 s) by an almost
+    empty 120-560 s gap. These compounds carry no chromatographic-separation
+    signal, so the model would partly be fitting a void artifact. The standard
+    5-minute (300 s) void cutoff removes the entire cluster at zero cost to
+    retained molecules (dropping to 200 s removes the same set; the gap is
+    empty). Set ``min_retention_s`` to 0 to keep everything.
+    """
+
+    min_retention_s: float = 300.0  # drop compounds with RT below this (dead-time filter)
+
+    def __post_init__(self) -> None:
+        if self.min_retention_s < 0:
+            raise ValueError(
+                f"min_retention_s ({self.min_retention_s}) must be non-negative"
+            )
+
+
+@dataclass
 class NoiseConfig:
     """Optional weak baseline augmentation (stress test only, never a claim)."""
 
@@ -181,6 +204,7 @@ class Config:
 
     experiment: str = "b6_clean_vector"
     metlin_path: str = "data/raw/metlin_smrt"
+    data: DataConfig = field(default_factory=DataConfig)
     target: TargetConfig = field(default_factory=TargetConfig)
     noise: NoiseConfig = field(default_factory=NoiseConfig)
     conditioning: ConditioningConfig = field(default_factory=ConditioningConfig)

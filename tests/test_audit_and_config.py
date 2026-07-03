@@ -93,6 +93,23 @@ def test_encoding_and_peak_loss_validation():
         TrainConfig(peak_lambda=-1.0)
 
 
+def test_data_config_defaults_and_validation():
+    from elutediff.config import DataConfig
+
+    # Default is the 5-minute void cutoff; wired into the top-level Config.
+    assert DataConfig().min_retention_s == 300.0
+    assert Config().data.min_retention_s == 300.0
+    with pytest.raises(ValueError, match="min_retention_s"):
+        DataConfig(min_retention_s=-1.0)
+
+
+def test_load_config_accepts_data_block(tmp_path: Path):
+    p = tmp_path / "c.yaml"
+    p.write_text("data:\n  min_retention_s: 0.0\n")
+    cfg = load_config(p)
+    assert cfg.data.min_retention_s == 0.0
+
+
 def test_sweep_returns_one_per_width():
     res = sweep_bin_widths(TargetConfig(), bin_widths=(10.0, 5.0))
     assert len(res) == 2
