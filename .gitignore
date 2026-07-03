@@ -44,3 +44,6 @@ wandb/
 .DS_Store
 .idea/
 .vscode/
+
+# transient status plots
+plots/

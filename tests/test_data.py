@@ -85,6 +85,18 @@ def test_load_csv(tmp_path):
     assert {m.pubchem_id for m in mols} == {"111", "333"}
 
 
+def test_load_csv_filters_unretained(tmp_path):
+    # A void compound (90 s) + a below-cutoff one (250 s) + a retained one (600 s).
+    csv = tmp_path / "smrt.csv"
+    csv.write_text("smiles,rt,pubchem\nCCO,90.0,1\nCCN,250.0,3\nc1ccccc1,600.0,2\n")
+    # Default keeps everything (the raw loader never silently filters).
+    assert len(load_metlin(csv)) == 3
+    # The 300 s dead-time cutoff drops both void-region compounds, counts them.
+    mols, stats = load_metlin(csv, return_stats=True, min_retention_s=300.0)
+    assert stats.unretained == 2
+    assert {m.pubchem_id for m in mols} == {"2"}
+
+
 def test_random_split_partitions_all():
     cfg = SplitConfig(strategy="random", val_frac=0.2, test_frac=0.2, seed=0)
     s = make_split(SMILES, cfg)

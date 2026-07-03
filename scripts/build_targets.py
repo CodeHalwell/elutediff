@@ -34,7 +34,10 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg: Config = load_config(args.config)
-    molecules, stats = load_metlin(cfg.metlin_path, return_stats=True)
+    molecules, stats = load_metlin(
+        cfg.metlin_path, return_stats=True,
+        min_retention_s=cfg.data.min_retention_s,
+    )
     print(stats)
 
     smiles = [m.smiles for m in molecules]
