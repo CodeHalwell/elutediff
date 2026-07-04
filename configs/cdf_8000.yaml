@@ -1,0 +1,50 @@
+# Clean 8000-step CDF run on the void-filtered dataset.
+# Single continuous cosine (no warm-restart), lower peak LR (5e-5 vs the prior
+# 1e-4 -- the model refined best at low LR), centroid decode, unretained
+# compounds removed. This is the intended reproducible headline run.
+experiment: cdf_8000
+metlin_path: data/raw/metlin_smrt
+
+data:
+  min_retention_s: 300.0   # drop the ~2058-compound void cluster
+
+target:
+  rt_min: 0.0
+  rt_max: 1200.0
+  bin_width: 10.0
+  sigma: 20.0
+  scale: 9
+  token_width: 1
+  encoding: cdf
+
+conditioning:
+  level: 1
+
+model:
+  model_name: unsloth/diffusiongemma-26B-A4B-it
+  load_in_4bit: false
+  canvas_length: 256
+  lora_r: 64
+  lora_alpha: 128
+  use_gradient_checkpointing: false
+
+train:
+  steps: 8000
+  grad_accum: 4
+  lr: 5.0e-5              # half the prior 1e-4; long anneal spends most time in the low-LR band
+  t_lo: 0.1
+  warmup_pct: 0.03
+  seed: 0
+  output_dir: runs/cdf_8000
+
+eval:
+  denoising_steps: [1, 16, 64]
+  rt_tolerances_s: [15.0, 30.0, 60.0]
+  n_eval: 200
+  decode_mode: centroid    # unbiased; argmax is ~one bin low under the coarse CDF staircase
+
+split:
+  strategy: scaffold
+  val_frac: 0.1
+  test_frac: 0.1
+  seed: 0
