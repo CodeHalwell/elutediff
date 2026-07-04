@@ -14,6 +14,27 @@ from __future__ import annotations
 from elutediff.config import ModelConfig
 
 
+def _shim_trl_constant_length_dataset() -> None:
+    """Let ``unsloth`` import under newer ``trl`` releases.
+
+    ``unsloth_zoo`` does ``from trl.trainer.utils import ConstantLengthDataset``
+    at import time, but trl removed that symbol from ``trainer.utils`` in recent
+    versions. We never use it (the block-diffusion loop is custom, no SFTTrainer),
+    so inject a harmless stub before importing unsloth rather than pinning the
+    whole trl/transformers/unsloth stack to a fragile combination. No-op when the
+    symbol already exists.
+    """
+    try:
+        import trl.trainer.utils as _u
+    except Exception:
+        return
+    if not hasattr(_u, "ConstantLengthDataset"):
+        class ConstantLengthDataset:  # minimal stub; only needs to be importable
+            pass
+
+        _u.ConstantLengthDataset = ConstantLengthDataset
+
+
 def load_model(cfg: ModelConfig, hf_token: str | None = None):
     """Load the DiffusionGemma model + processor via Unsloth ``FastModel``.
 
@@ -22,6 +43,8 @@ def load_model(cfg: ModelConfig, hf_token: str | None = None):
     slow path. The processor bundles the chat template and tokenizer.
     """
     import torch
+
+    _shim_trl_constant_length_dataset()
     from unsloth import FastModel
 
     if torch.cuda.is_available():
@@ -46,6 +69,7 @@ def add_lora(model, cfg: ModelConfig):
 
     Targets attention + dense MLP; trains ~0.5% of parameters at r=64.
     """
+    _shim_trl_constant_length_dataset()
     from unsloth import FastModel
 
     return FastModel.get_peft_model(
