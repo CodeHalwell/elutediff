@@ -212,6 +212,7 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig,
         if (on_checkpoint is not None and checkpoint_every
                 and step % checkpoint_every == 0 and step != train_cfg.steps):
             on_checkpoint(step, model)
+            model.train()   # the callback's eval/generate flips to eval(); restore
     if on_checkpoint is not None:
         on_checkpoint(train_cfg.steps, model)   # always checkpoint/eval the final step
     return model
