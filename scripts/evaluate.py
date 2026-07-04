@@ -52,7 +52,7 @@ def main() -> int:
             if not res.ok:
                 continue
             valid += 1
-            rt_hat = decoded_rt(res.levels, cfg.target, mode="argmax")
+            rt_hat = decoded_rt(res.levels, cfg.target, mode=cfg.eval.decode_mode)
             y_true.append(r["rt"])
             y_pred.append(rt_hat)
             win_prob.append(window_probability(res.levels, grid, r["rt"], cfg.target.sigma))

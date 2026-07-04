@@ -185,6 +185,17 @@ class EvalConfig:
     coverage_levels: list[float] = field(default_factory=lambda: [0.5, 0.8, 0.9])
     n_eval: int = 200
     n_samples: int = 8           # diffusion samples per molecule for uncertainty
+    # Point-RT decode from the density. "centroid" (intensity-weighted mean) is
+    # unbiased; "argmax" (peak-bin center) is biased ~one bin low under the
+    # coarse CDF staircase (scale=9), since np.argmax takes the left edge of the
+    # 2-bin peak plateau -- a free ~5-7 s MAE penalty. Default to centroid.
+    decode_mode: str = "centroid"  # "centroid" | "argmax"
+
+    def __post_init__(self) -> None:
+        if self.decode_mode not in ("centroid", "argmax"):
+            raise ValueError(
+                f"decode_mode must be 'centroid' or 'argmax', got {self.decode_mode!r}"
+            )
 
 
 @dataclass

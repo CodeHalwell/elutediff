@@ -98,12 +98,25 @@ def _peak_loss(logits, x0, digit_ids, values, encoding, mode):
 
 
 def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig,
-          processor=None, target_cfg=None):
+          processor=None, target_cfg=None, start_step=0, on_checkpoint=None,
+          checkpoint_every=0):
     """Run the block-diffusion fine-tuning loop. Returns the trained ``model``.
 
     When ``train_cfg.peak_loss`` is enabled, ``processor`` and ``target_cfg`` are
     required (to map digit tokens to levels and read the encoding); the auxiliary
     ``peak_lambda * peak_loss`` term is added to the denoising cross-entropy.
+
+    Resumable / observable run support (used by ``scripts/train_diffusion.py`` to
+    survive preemption and log a checkpoint/eval curve):
+
+    * ``start_step`` -- resume from this optimizer step. The OneCycle schedule is
+      built for the full ``train_cfg.steps`` and fast-forwarded ``start_step``
+      times so the LR continues from where a killed run left off (inject the
+      adapter weights before calling; optimizer moments restart, as in a warm
+      resume). The loop then runs ``start_step+1 .. steps``.
+    * ``on_checkpoint(step, model)`` -- called every ``checkpoint_every`` steps
+      (and once at the final step) so the caller can save/push the adapter and
+      run a held-out eval. No-op when either argument is unset.
     """
     import torch
 
@@ -139,6 +152,16 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig,
         opt, max_lr=train_cfg.lr, total_steps=train_cfg.steps,
         pct_start=train_cfg.warmup_pct, anneal_strategy="cos",
     )
+    # Resume: fast-forward the LR schedule to `start_step` so a preempted run
+    # continues from the same point on the cosine (not a fresh warmup). Stepping
+    # the scheduler before the optimizer is intentional here (we are only
+    # advancing the LR), so silence PyTorch's order warning for this block.
+    if start_step > 0:
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Detected call of")
+            for _ in range(min(start_step, train_cfg.steps)):
+                sched.step()
 
     def corrupt(x0):
         t = random.uniform(train_cfg.t_lo, 1.0)
@@ -151,7 +174,7 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig,
     ptr = 0
     t0 = time.time()
     opt.zero_grad(set_to_none=True)
-    for step in range(1, train_cfg.steps + 1):
+    for step in range(start_step + 1, train_cfg.steps + 1):
         step_loss = 0.0
         step_peak = 0.0
         for _ in range(train_cfg.grad_accum):
@@ -185,7 +208,13 @@ def train(model, examples, model_cfg: ModelConfig, train_cfg: TrainConfig,
         if step % 20 == 0:
             extra = f" | peak {step_peak:.3f}" if peak_mode != "none" else ""
             print(f"step {step:4d}/{train_cfg.steps} | loss {step_loss:.4f}{extra} "
-                  f"| {time.time() - t0:.0f}s", flush=True)
+                  f"| lr {sched.get_last_lr()[0]:.2e} | {time.time() - t0:.0f}s", flush=True)
+        if (on_checkpoint is not None and checkpoint_every
+                and step % checkpoint_every == 0 and step != train_cfg.steps):
+            on_checkpoint(step, model)
+            model.train()   # the callback's eval/generate flips to eval(); restore
+    if on_checkpoint is not None:
+        on_checkpoint(train_cfg.steps, model)   # always checkpoint/eval the final step
     return model
 
 

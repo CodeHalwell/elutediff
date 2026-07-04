@@ -110,6 +110,25 @@ def test_load_config_accepts_data_block(tmp_path: Path):
     assert cfg.data.min_retention_s == 0.0
 
 
+def test_eval_decode_mode_default_and_validation():
+    from elutediff.config import EvalConfig
+
+    # Centroid is the unbiased default (argmax is ~1 bin low under coarse CDF).
+    assert EvalConfig().decode_mode == "centroid"
+    assert Config().eval.decode_mode == "centroid"
+    with pytest.raises(ValueError, match="decode_mode must be"):
+        EvalConfig(decode_mode="bogus")
+
+
+def test_cdf_8000_config_loads():
+    cfg = load_config("configs/cdf_8000.yaml")
+    assert cfg.train.steps == 8000
+    assert cfg.train.lr == 5.0e-5
+    assert cfg.data.min_retention_s == 300.0
+    assert cfg.eval.decode_mode == "centroid"
+    assert cfg.target.encoding == "cdf"
+
+
 def test_sweep_returns_one_per_width():
     res = sweep_bin_widths(TargetConfig(), bin_widths=(10.0, 5.0))
     assert len(res) == 2
